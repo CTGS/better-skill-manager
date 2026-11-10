@@ -928,10 +928,33 @@ body[data-ds-dark-theme] .sh-segmentGlider{background:rgba(255,255,255,.14);bord
           const element = buttonRef.current;
           if (element === null) return null;
           const rect = element.getBoundingClientRect();
-          const width = Math.min(460, window.innerWidth - 16);
-          const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
-          const bottom = Math.max(8, window.innerHeight - rect.top + 8);
-          const height = Math.max(120, Math.min(520, window.innerHeight - bottom - 12));
+          const margin = 8;
+          // Keep the panel header below the app's fixed top bar. The previous
+          // `max(120, ...)` could put the header above the viewport when the
+          // new-conversation composer placed the trigger near the top.
+          const topInset = 64;
+          const width = Math.min(460, window.innerWidth - margin * 2);
+          const left = Math.max(margin, Math.min(rect.left, window.innerWidth - width - margin));
+          const above = Math.max(0, rect.top - margin - topInset);
+          const below = Math.max(0, window.innerHeight - rect.bottom - margin * 2);
+          const minUsable = 220;
+          let height;
+          let top;
+          if (above >= minUsable || above >= below) {
+            height = Math.min(520, above);
+            top = rect.top - margin - height;
+          } else {
+            height = Math.min(520, below);
+            top = rect.bottom + margin;
+          }
+          if (height < 120) {
+            // Neither side has a usable height: use the viewport as a bounded
+            // panel so the header (Add / close) stays reachable.
+            height = Math.min(520, Math.max(120, window.innerHeight - topInset - margin));
+            top = topInset;
+          }
+          top = Math.max(topInset, Math.min(top, window.innerHeight - height - margin));
+          const bottom = window.innerHeight - top - height;
           return { left, bottom, width, height };
         }, []);
 
